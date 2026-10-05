@@ -1,0 +1,46 @@
+{# hydro-lv: 按用户等级(LV)给用户名上色,并隐藏 LV 标签 #}
+{# 颜色规则: LV0 灰#bfbfbf / LV1 蓝#3498db / LV2-4 绿#52c41a / LV5-7 橙#f39c11 / LV8-10 红#fe4c61 #}
+{% macro render_inline(udoc, avatar=true, badge=true, modbadge=true, levelbadge=true) %}
+{% if udoc %}
+{% set lv = udoc.level|default(0) %}
+{% set lvColor = ((lv == 1) and '#3498db') or ((lv >= 2 and lv <= 4) and '#52c41a') or ((lv >= 5 and lv <= 7) and '#f39c11') or ((lv >= 8) and '#fe4c61') or '#bfbfbf' %}
+{# data-tag-scope: 声明"此位置会渲染自定义 Tag(徽章)",供 hydro-award 判断是否注入奖项钩子。
+   凡经本宏且 badge=true 的位置(排行榜/犇犇/关注粉丝列表等)都带此标记;
+   badge=false 的位置(题目上传者/讨论列表/工单/提交记录等)不带,从而不显示钩子。 #}
+<span class="user-profile-link"{% if badge %} data-tag-scope{% endif %}>
+  {% if avatar %}
+    {% set av = avatarUrl(udoc.avatar|default('')) %}<img class="small user-profile-avatar v-center" loading="lazy" src="{{ av ~ ('&' if '?' in av else '?') ~ 'r=' ~ ((Date.now()/86400000)|round(0,'floor')) }}" width="20" height="20">
+  {% endif %}
+  <a class="user-profile-name uname--lv{{ lv }}" style="color:{{ lvColor }}" href="{{ url('user_detail', uid=udoc._id) }}">
+    {% if handler.user.hasPerm(perm.PERM_VIEW_USER_PRIVATE_INFO) and udoc.displayName and udoc.displayName != udoc.uname %}
+      {{ udoc.displayName }} ({{ udoc.uname }})
+    {% else %}
+      {{ udoc.uname }}
+    {% endif %}
+  </a>
+  {% if badge %}
+    {% if udoc.badge %}
+      {% set _badge = udoc.badge.split('#') %}
+      <span class="user-profile-badge v-center" style="background-color:#{{ _badge[1] }}{% if _badge[2] %};color:#{{ _badge[2] }}{% endif %}">{{ _badge[0] }}</span>
+    {% endif %}
+    {# LV 标签已按需求隐藏(不再渲染 badge--lvN) #}
+    {% if modbadge %}
+      {% if udoc.hasPriv(PRIV.PRIV_MOD_BADGE) %}
+        <span class="user-profile-badge v-center badge--su" data-tooltip="{{ _('SuperUser') }}">SU</span>
+      {% elif udoc.hasPerm(perm.PERM_MOD_BADGE) %}
+        <span class="user-profile-badge v-center badge--mod" data-tooltip="{{ _('Moderator') }}">MOD</span>
+      {% endif %}
+    {% endif %}
+  {% endif %}
+</span>
+{% else %}
+  <span class="user-profile-link">
+    {% if avatar %}
+      <img class="small user-profile-avatar v-center" src="{{ UiContext.cdn_prefix }}img/avatar.png" width="20" height="20">
+    {% endif %}
+    <a class="user-profile-name" style="color:#bfbfbf" href="#">
+      {{ _('Unknown User') }}
+    </a>
+  </span>
+{% endif %}
+{% endmacro %}

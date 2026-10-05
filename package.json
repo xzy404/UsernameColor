@@ -1,0 +1,7 @@
+{
+  "name": "hydro-lv",
+  "version": "1.0.0",
+  "description": "根据用户等级(LV)给用户名上色,并隐藏 LV 标签(洛谷风格等级系统)",
+  "main": "index.ts",
+  "dependencies": {}
+}
